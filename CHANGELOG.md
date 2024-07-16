@@ -1,5 +1,8 @@
 # Changelog
 
+## 2024-07-16
+* Adapted to single-phase Shelly gen2+ devices
+
 ## v0.1.7
 * Changed: Update `energy_forward` only if it was received
 * Changed: Fixed problems when timeout was set to `0`.

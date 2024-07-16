@@ -1,89 +1,27 @@
-# dbus-mqtt-pv - Emulates a physical PV Inverter from MQTT data
+# dbus-mqtt-pv - Emulates a physical PV Inverter from Shelly gen2+ MQTT data
 
 <small>GitHub repository: [mr-manuel/venus-os_dbus-mqtt-pv](https://github.com/mr-manuel/venus-os_dbus-mqtt-pv)</small>
-
-### Disclaimer
-
-I wrote this script for myself. I'm not responsible, if you damage something using my script.
-
-
-### Supporting/Sponsoring this project
-
-You like the project and you want to support me?
-
-[<img src="https://github.md0.eu/uploads/donate-button.svg" height="50">](https://www.paypal.com/donate/?hosted_button_id=3NEVZBDM5KABW)
 
 
 ### Purpose
 
 The script emulates a Photovoltaic AC Inverter in Venus OS. It gets the MQTT data from a subscribed topic and publishes the information on the dbus as the service `com.victronenergy.pvinverter.mqtt_pv` with the VRM instance `51`.
 
+It has been adpated from mr-manuel's driver specifically for single-phase Shelly gen2+ devices such as the "Plus 1PM" or the "PM mini" models.
+
 
 ### Config
 
-Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` folder and change it as you need it.
+Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` folder and change it to your needs. In particular, adapt the "topic" parameter to your Shelly device's MQTT prefix.
 
 
-### JSON structure
+### JSON structure for a Shelly gen2+ device
 
 <details><summary>Minimum required</summary>
 
 ```json
 {
-    "pv": {
-        "power": 0.0
-    }
-}
-```
-</details>
-
-<details><summary>Minimum required with L1</summary>
-
-```json
-{
-    "pv": {
-        "power": 0.0,
-        "L1": {
-            "power": 0.0
-        }
-    }
-}
-```
-</details>
-
-<details><summary>Minimum required with L1, L2</summary>
-
-```json
-{
-    "pv": {
-        "power": 0.0,
-        "L1": {
-            "power": 0.0
-        },
-        "L2": {
-            "power": 0.0
-        }
-    }
-}
-```
-</details>
-
-<details><summary>Minimum required with L1, L2, L3</summary>
-
-```json
-{
-    "pv": {
-        "power": 0.0,
-        "L1": {
-            "power": 0.0
-        },
-        "L2": {
-            "power": 0.0
-        },
-        "L3": {
-            "power": 0.0
-        }
-    }
+  "power": 0.0
 }
 ```
 </details>
@@ -92,33 +30,13 @@ Copy or rename the `config.sample.ini` to `config.ini` in the `dbus-mqtt-pv` fol
 
 ```json
 {
-    "pv": {
-        "power": 0.0,
-        "voltage": 0.0,
-        "current": 0.0,
-        "energy_forward": 0.0,           --> Total/Lifetime produced energy in kWh
-        "L1": {
-            "power": 0.0,
-            "voltage": 0.0,
-            "current": 0.0,
-            "frequency": 0.0,
-            "energy_forward": 0.0,       --> Total/Lifetime produced energy in kWh
-        },
-        "L2": {
-            "power": 0.0,
-            "voltage": 0.0,
-            "current": 0.0,
-            "frequency": 0.0,
-            "energy_forward": 0.0,       --> Total/Lifetime produced energy in kWh
-        },
-        "L3": {
-            "power": 0.0,
-            "voltage": 0.0,
-            "current": 0.0,
-            "frequency": 0.0,
-            "energy_forward": 0.0,       --> Total/Lifetime produced energy in kWh
-        }
-    }
+  "apower": 0.0,
+  "voltage": 0.0,
+  "current": 0.0,
+  "freq:": 50,
+  "aenergy": {
+    "total": 0.0   --> Total/Lifetime produced energy in Wh
+  },
 }
 ```
 </details>
@@ -212,9 +130,8 @@ Now you can install and run the cloned driver. Should you need another instance 
 
 ### Compatibility
 
-It was tested on Venus OS Large `v2.92` on the following devices:
+It was tested on Venus OS Large `v3.33` with the following devices:
 
-* RaspberryPi 4b
 * MultiPlus II (GX Version)
 
 ### Screenshots
@@ -225,23 +142,5 @@ It was tested on Venus OS Large `v2.92` on the following devices:
 ![Pv power L1 - device list](/screenshots/pv_power_L1_device-list.png)
 ![Pv power L1 - device list - mqtt pv 1](/screenshots/pv_power_L1_device-list_mqtt-pv-1.png)
 ![Pv power L1 - device list - mqtt pv 2](/screenshots/pv_power_L1_device-list_mqtt-pv-2.png)
-
-</details>
-
-<details><summary>Power, L1 and L2</summary>
-
-![Pv power L1, L2 - pages](/screenshots/pv_power_L2_L1_pages.png)
-![Pv power L1, L2 - device list](/screenshots/pv_power_L2_L1_device-list.png)
-![Pv power L1, L2 - device list - mqtt pv 1](/screenshots/pv_power_L2_L1_device-list_mqtt-pv-1.png)
-![Pv power L1, L2 - device list - mqtt pv 2](/screenshots/pv_power_L2_L1_device-list_mqtt-pv-2.png)
-
-</details>
-
-<details><summary>Power, L1, L2 and L3</summary>
-
-![Pv power L1, L2, L3 - pages](/screenshots/pv_power_L3_L2_L1_pages.png)
-![Pv power L1, L2, L3 - device list](/screenshots/pv_power_L3_L2_L1_device-list.png)
-![Pv power L1, L2, L3 - device list - mqtt pv 1](/screenshots/pv_power_L3_L2_L1_device-list_mqtt-pv-1.png)
-![Pv power L1, L2, L3 - device list - mqtt pv 2](/screenshots/pv_power_L3_L2_L1_device-list_mqtt-pv-2.png)
 
 </details>
