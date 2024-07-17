@@ -75,25 +75,8 @@ pv_power = -1
 pv_current = 0
 pv_voltage = 0
 pv_forward = 0
-
-pv_L1_power = None
-pv_L1_current = None
-pv_L1_voltage = None
-pv_L1_frequency = None
-pv_L1_forward = None
-
-pv_L2_power = None
-pv_L2_current = None
-pv_L2_voltage = None
-pv_L2_frequency = None
-pv_L2_forward = None
-
-pv_L3_power = None
-pv_L3_current = None
-pv_L3_voltage = None
-pv_L3_frequency = None
-pv_L3_forward = None
-
+pv_reverse = 0
+frequency = 50
 
 # MQTT requests
 def on_disconnect(client, userdata, rc):
@@ -131,10 +114,7 @@ def on_message(client, userdata, msg):
 
         global \
             last_changed, \
-            pv_power, pv_current, pv_voltage, pv_forward, \
-            pv_L1_power, pv_L1_current, pv_L1_voltage, pv_L1_frequency, pv_L1_forward, pv_L1_reverse, \
-            pv_L2_power, pv_L2_current, pv_L2_voltage, pv_L2_frequency, pv_L2_forward, pv_L2_reverse, \
-            pv_L3_power, pv_L3_current, pv_L3_voltage, pv_L3_frequency, pv_L3_forward, pv_L3_reverse
+            pv_power, pv_current, pv_voltage, pv_forward, pv_reverse
 
         # get JSON from topic
         if msg.topic == config['MQTT']['topic']:
@@ -147,8 +127,11 @@ def on_message(client, userdata, msg):
                     pv_power = float(jsonpayload['apower'])
                     pv_voltage = float(jsonpayload['voltage']) if 'voltage' in jsonpayload else float(config['DEFAULT']['voltage'])
                     pv_current = float(jsonpayload['current']) if 'current' in jsonpayload else pv_power/pv_voltage
+                    frequency = float(jsonpayload['freq']) if 'freq' in jsonpayload else 50
                     if 'aenergy' in jsonpayload:
                         pv_forward = float(jsonpayload['aenergy']['total']/1000)
+                    if 'ret_aenergy' in jsonpayload:
+                        pv_reverse = float(jsonpayload['ret_aenergy']['total']/1000)
                 else:
                     logging.error("Received JSON MQTT message does not include a power object in the pv object. Expected at least: {\"apower\": 0.0}")
                     logging.debug("MQTT payload: " + str(msg.payload)[1:])
@@ -224,42 +207,17 @@ class DbusMqttPvService:
             self._dbusservice['/Ac/Current'] = round(pv_current, 2) if pv_current is not None else None
             self._dbusservice['/Ac/Voltage'] = round(pv_voltage, 2) if pv_voltage is not None else None
             self._dbusservice['/Ac/Energy/Forward'] = round(pv_forward, 2) if pv_forward is not None else None
+            self._dbusservice['/Ac/Energy/Reverse'] = round(pv_reverse, 2) if pv_reverse is not None else None
 
-            if pv_L1_power is not None:
-                self._dbusservice['/Ac/L1/Power'] = round(pv_L1_power, 2) if pv_L1_power is not None else None
-                self._dbusservice['/Ac/L1/Current'] = round(pv_L1_current, 2) if pv_L1_current is not None else None
-                self._dbusservice['/Ac/L1/Voltage'] = round(pv_L1_voltage, 2) if pv_L1_voltage is not None else None
-                self._dbusservice['/Ac/L1/Frequency'] = round(pv_L1_frequency, 2) if pv_L1_frequency is not None else None
-                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_L1_forward, 2) if pv_L1_forward is not None else None
             # at least one phase is needed to work properly
-            elif pv_L2_power is None and pv_L3_power is None:
-                self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2) if pv_power is not None else None
-                self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2) if pv_current is not None else None
-                self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2) if pv_voltage is not None else None
-                self._dbusservice['/Ac/L1/Frequency'] = None
-                self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2) if pv_forward is not None else None
-
-            if pv_L2_power is not None:
-                self._dbusservice['/Ac/L2/Power'] = round(pv_L2_power, 2) if pv_L2_power is not None else None
-                self._dbusservice['/Ac/L2/Current'] = round(pv_L2_current, 2) if pv_L2_current is not None else None
-                self._dbusservice['/Ac/L2/Voltage'] = round(pv_L2_voltage, 2) if pv_L2_voltage is not None else None
-                self._dbusservice['/Ac/L2/Frequency'] = round(pv_L2_frequency, 2) if pv_L2_frequency is not None else None
-                self._dbusservice['/Ac/L2/Energy/Forward'] = round(pv_L2_forward, 2) if pv_L2_forward is not None else None
-
-            if pv_L3_power is not None:
-                self._dbusservice['/Ac/L3/Power'] = round(pv_L3_power, 2) if pv_L3_power is not None else None
-                self._dbusservice['/Ac/L3/Current'] = round(pv_L3_current, 2) if pv_L3_current is not None else None
-                self._dbusservice['/Ac/L3/Voltage'] = round(pv_L3_voltage, 2) if pv_L3_voltage is not None else None
-                self._dbusservice['/Ac/L3/Frequency'] = round(pv_L3_frequency, 2) if pv_L3_frequency is not None else None
-                self._dbusservice['/Ac/L3/Energy/Forward'] = round(pv_L3_forward, 2) if pv_L3_forward is not None else None
+            self._dbusservice['/Ac/L1/Power'] = round(pv_power, 2) if pv_power is not None else None
+            self._dbusservice['/Ac/L1/Current'] = round(pv_current, 2) if pv_current is not None else None
+            self._dbusservice['/Ac/L1/Voltage'] = round(pv_voltage, 2) if pv_voltage is not None else None
+            self._dbusservice['/Ac/L1/Frequency'] = round(frequency, 2) if frequency is not None else None
+            self._dbusservice['/Ac/L1/Energy/Forward'] = round(pv_forward, 2) if pv_forward is not None else None
+            self._dbusservice['/Ac/L1/Energy/Reverse'] = round(pv_reverse, 2) if pv_reverse is not None else None
 
             logging.debug("PV: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_power, pv_voltage, pv_current))
-            if pv_L1_power:
-                logging.debug("|- L1: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L1_power, pv_L1_voltage, pv_L1_current))
-            if pv_L2_power:
-                logging.debug("|- L2: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L2_power, pv_L2_voltage, pv_L2_current))
-            if pv_L3_power:
-                logging.debug("|- L3: {:.1f} W - {:.1f} V - {:.1f} A".format(pv_L3_power, pv_L3_voltage, pv_L3_current))
 
             # is only displayed for Fronius inverters (product ID 0xA142) in GUI but displayed in VRM portal
             # if power above 10 W, set status code to 7 (running)
@@ -362,6 +320,7 @@ def main():
         '/Ac/Current': {'initial': 0, 'textformat': _a},
         '/Ac/Voltage': {'initial': 0, 'textformat': _v},
         '/Ac/Energy/Forward': {'initial': None, 'textformat': _kwh},
+        '/Ac/Energy/Reverse': {'initial': None, 'textformat': _kwh},
 
         '/Ac/MaxPower': {'initial': int(config['PV']['max']), 'textformat': _w},
         '/Ac/Position': {'initial': int(config['PV']['position']), 'textformat': _n},
@@ -375,22 +334,7 @@ def main():
         '/Ac/L1/Voltage': {'initial': None, 'textformat': _v},
         '/Ac/L1/Frequency': {'initial': None, 'textformat': _hz},
         '/Ac/L1/Energy/Forward': {'initial': None, 'textformat': _kwh},
-    })
-
-    paths_dbus.update({
-        '/Ac/L2/Power': {'initial': None, 'textformat': _w},
-        '/Ac/L2/Current': {'initial': None, 'textformat': _a},
-        '/Ac/L2/Voltage': {'initial': None, 'textformat': _v},
-        '/Ac/L2/Frequency': {'initial': None, 'textformat': _hz},
-        '/Ac/L2/Energy/Forward': {'initial': None, 'textformat': _kwh},
-    })
-
-    paths_dbus.update({
-        '/Ac/L3/Power': {'initial': None, 'textformat': _w},
-        '/Ac/L3/Current': {'initial': None, 'textformat': _a},
-        '/Ac/L3/Voltage': {'initial': None, 'textformat': _v},
-        '/Ac/L3/Frequency': {'initial': None, 'textformat': _hz},
-        '/Ac/L3/Energy/Forward': {'initial': None, 'textformat': _kwh},
+        '/Ac/L1/Energy/Reverse': {'initial': None, 'textformat': _kwh},
     })
 
     DbusMqttPvService(
